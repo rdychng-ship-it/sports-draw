@@ -2,90 +2,98 @@ import { useState } from 'react'
 
 
 
-function CreateGames() {
-  const games = new Map();
-  for (const i of teams) {
-    games.set(i, []);
-    for (const j of teams) {
-      if (i != j && !draw.has(j))
-      {
-        games.get(i).push(j);
-      }
-    }
-    if (games.get(i).length == 0) {
-      games.delete(i);
+function createGames(teams) {
+  const games = [];
+  for (let i = 0; i < teams.length; i++) {
+    for (let j = i + 1; j < teams.length; j++) {
+      games.push(`${teams[i]} vs ${teams[j]}`);
     }
   }
   return games;
 }
 
 // Generates List of teams
-function Group(){
-  const teams = ['Meow', 'Woof', 'Moo', 'Roar'  ]
+function Group({ teams, cells }) {
+  const placed = new Set(cells.flat());
+  const games = createGames(teams).filter((game) => !placed.has(game));
+
   return (
-    <>
-      <ul className = "group-games"
-      >
-        {teams.map((team, index) => (
-          <li 
-          key={team} 
+    <ul className="group-games">
+      {games.map((game) => (
+        <li
+          key={game}
           className="games-item"
           draggable="true"
-          onDragStart={(e) => e.dataTransfer.setData('text/plain', team)}
-          >
-            {team}
-          </li>
-        ))}
-      </ul>
-    </>
-  )
+          onDragStart={(e) => e.dataTransfer.setData('text/plain', game)}
+        >
+          {game}
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 // Generates Table
-function Table(){
-  const [value, setValue] = useState(null)
-  const c = 4;
-  const r = 10;
+function Table({ cells, onTeamDrop }) {
+  let time =8;
   return (
-    <>
-      <table>
-        <tbody>
-          {Array.from({length: r }, (_,i) =>  (
-            <tr key={i}>
-              {Array.from({length: c }, (_, j) => (
-                <td 
-                  key={j}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    const team = e.dataTransfer.getData('text/plain')
-                    console.log('Dropped', team, 'on row', i, 'column', j)
-                    setValue({team, row: i, col: j});
-                  }}
-                >
-                  {i === 0 && j ===0 ? "Time" : ""}
-                  {value && value.row == i && value.col === j ? value.team : ""}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
-  )
+    <table>
+      <tbody>
+        {cells.map((row, i) => (
+          <tr key={i}>
+            {row.map((team, j) => (
+              <td
+                key={j}
+                onDragOver={(e) => { if (i !== 0 && j !== 0) e.preventDefault(); }}
+                onDrop={(e) => {
+                  const dropped = e.dataTransfer.getData('text/plain');
+                  onTeamDrop(i, j, dropped);
+                }}
+              >
+                {i === 0 && j === 0 ? "Time" 
+                  : i===0 ? `Court ${j}`
+                  : j === 0 ? `${time + i}:00`
+                  :team}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 }
 
-// Renders Webpage
+
 export default function Draw() {
+  const c = 4;
+  const r = 10;
+  const teams = ['Meow', 'Woof', 'Moo', 'Roar'];
+
+  // An 2d Array
+  const [cells, setCells] = useState(
+    () => Array.from({ length: r }, () => Array(c).fill(null))
+  );
+
+  function handleDrop(row, col, team) {
+    setCells(prev =>
+      prev.map((rowArr, i) =>
+        i === row ? rowArr.map((cell, j) => (j === col ? team : cell)) 
+          : rowArr
+      )
+    );
+  }
+
+  // Renders Webpage
   return (
     <>
       <header><h1>Draw Organizer</h1></header>
         
       <main>
         <section>
-          <Group />
+          <Group teams={teams} cells={cells} />
         </section>
         <section>
-          <Table />
+          <Table cells={cells} onTeamDrop={handleDrop} />
         </section>
 
       </main>
