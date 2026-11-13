@@ -1,0 +1,40 @@
+:root {
+    --bg: #02070d;
+    --card: rgba(0, 0, 0, 0.75);
+    --border: rgba(255, 255, 255, 0.12);
+    --accent: #7b2cbf;
+    --accent-light: #c77dff;
+    --text: #ffffff;
+    --muted: #c9c9d1;
+}
+
+
+.group-games {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+
+}
+
+.games-item {
+    padding: 8px 14px;
+    border: 1px solid var(--accent-light);
+    border-radius: 999px;
+    background-color: var(--accent-light);
+    font-size: 15px;
+    justify-content: center;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 15% 85%;
+}
+
+table, th, td {
+    border: 2px solid;
+    border-collapse: collapse;
+    padding: 10px;
+}
+
