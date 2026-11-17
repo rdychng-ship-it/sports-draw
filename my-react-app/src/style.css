@@ -32,11 +32,15 @@ main {
     grid-template-columns: 15% 85%;
 }
 
-table, th, td {
+table, th, td, tr {
     border: 2px solid;
     border-collapse: collapse;
     padding: 10px;
+    text-align: center;
 }
 
-
+section {
+    display: flex;
+    justify-content: center;
+}
 
