@@ -111,11 +111,12 @@ export default function Draw() {
    */
   function handleDrop(row, col, team, r_origin, c_origin) {
     if (row === 0 || col === 0) return; // never drop onto the labels
+
     setCells(prev =>
       prev.map((rowArr, i) =>
         rowArr.map((cell, j) =>
-          i === row && j === col             ? team  // the target cell gets the game
-          : i === r_origin && j === c_origin ? null  // the origin cell is emptied
+          i === row && j === col            ? team // the target cell gets the game
+          : i === r_origin && j === c_origin ? prev[row][col]// the origin cell is emptied
           : cell                                     // every other cell stays the same
         )
       )
