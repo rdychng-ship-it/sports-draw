@@ -1,107 +1,35 @@
-import { useState } from 'react'
+import { useState } from 'react';
+import Group from './components/Group';
+import Table from './components/Table';
+import UserInputs from './components/UserInputs';
+import { resizeGrid } from './utils/grid';
 
-/** 
-* Generates Games Between Teams
-*
-* @param {string[]} teams - An array of teams
-* @returns {string[]} An array of games
-*/
-function createGames(teams) {
-  const games = [];
-  for (let i = 0; i < teams.length; i++) {
-    for (let j = i + 1; j < teams.length; j++) {
-      games.push(`${teams[i]} vs ${teams[j]}`);
-    }
-  }
-  return games;
-}
+const START_COURTS = 3;
+const ROWS = 10; // 1 header row + 9 time slots
 
 /**
-* Renders List of games
-*
-* @param {string[]} teams - An array of teams
-* @param {(string|null)[][]} cells - 2d array for table
- * @returns {JSX.Element} A list of draggable games that haven't been placed in the table yet
-*/
-function Group({ teams, cells }) {
-
-  // Keeps track of what to generate in list
-  const placed = new Set(cells.flat()); 
-  const games = createGames(teams).filter((game) => !placed.has(game));
-
-  return (
-    <ul className="group-games">
-      {games.map((game) => (
-        <li
-          key={game}
-          className="games-item"
-          draggable="true"
-          onDragStart={(e) => e.dataTransfer.setData('application/x-draw-game', JSON.stringify({dropped: game, r_origin: null, c_origin: null}))}
-        >
-          {game}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/** 
- * Renders Schedule Table
- * 
- * @param {(string|null[][])} cells - 2d array of the table
- * @param {function} onTeamDrop - function to handle data transfers
-*/
-function Table({ cells, onTeamDrop }) {
-  let time =8;
-  return (
-    <table>
-      <tbody>
-        {cells.map((row, i) => (
-          <tr key={i}>
-            {row.map((team, j) => (
-              <td
-                key={j}
-                draggable= {team === null ? false : true}
-                onDragStart={(e) => e.dataTransfer.setData('application/x-draw-game', JSON.stringify({dropped: team, r_origin: i, c_origin: j}))}
-                onDragOver={(e) => { if (i !== 0 && j !== 0) e.preventDefault(); }}
-                onDrop={(e) => {
-                  const data = JSON.parse(e.dataTransfer.getData('application/x-draw-game'))
-                  onTeamDrop(i, j, data.dropped, data.r_origin, data.c_origin);
-                }}
-              >
-                {i === 0 && j === 0 ? "Time" 
-                  : i===0 ? `Court ${j}`
-                  : j === 0 ? `${time + i}:00`
-                  :team}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-/**
- * Root component for the Draw Organizer.
+ * Root component for the Draw Organiser.
  * Holds the schedule state and passes it to the game list and the table.
  *
- * @returns {JSX.Element} The page header, the list of unplaced games, and the schedule table
+ * @returns {JSX.Element} The page header, court input, list of unplaced games and schedule table
  */
 export default function Draw() {
-  // Table size and teams (to be changed to user Inputs)
-  const c = 4;
-  const r = 10;
-  const teams = ['Meow', 'Woof', 'Moo', 'Roar'];
+  const teams = ['Meow', 'Woof', 'Moo', 'Roar']; // to be replaced with user input
 
-  // Schedule grid: cell[row][col]
-  const [cells, setCells] = useState(
-    () => Array.from({ length: r }, () => Array(c).fill(null))
-  );
+  const [courts, setCourts] = useState(START_COURTS);
 
+  // Schedule grid: cells[row][col] holds a game string, or null if empty.
+  // +1 column for the time labels.
+  const [cells, setCells] = useState(() => resizeGrid([], ROWS, START_COURTS + 1));
+
+  function handleCourtsChange(n) {
+    setCourts(n);
+    setCells((prev) => resizeGrid(prev, ROWS, n + 1));
+  }
 
   /**
-   * Places a game in a cell. If it came from another cell, that cell is emptied.
+   * Places a game in a cell. If it came from another cell, that cell gets
+   * whatever was in the target (so occupied cells swap).
    *
    * @param {number} row - Target row
    * @param {number} col - Target column
@@ -112,31 +40,34 @@ export default function Draw() {
   function handleDrop(row, col, team, r_origin, c_origin) {
     if (row === 0 || col === 0) return; // never drop onto the labels
 
-    setCells(prev =>
-      prev.map((rowArr, i) =>
+    setCells((prev) => {
+      const replaced = prev[row][col]; // what was in the target before the drop
+
+      return prev.map((rowArr, i) =>
         rowArr.map((cell, j) =>
-          i === row && j === col            ? team // the target cell gets the game
-          : i === r_origin && j === c_origin ? prev[row][col]// the origin cell is emptied
-          : cell                                     // every other cell stays the same
+          i === row && j === col             ? team      // the target gets the dragged game
+          : i === r_origin && j === c_origin ? replaced  // the origin gets the old target value
+          : cell                                         // every other cell stays the same
         )
-      )
-    );
+      );
+    });
   }
 
-  // Renders Webpage
   return (
     <>
       <header><h1>Draw Organizer</h1></header>
-        
+
       <main>
         <section>
+        <UserInputs courts={courts} onCourtsChange={handleCourtsChange} />
+          {/* Games not yet placed in the table */}
           <Group teams={teams} cells={cells} />
         </section>
         <section>
+          {/* Schedule grid; reports drops back up to handleDrop */}
           <Table cells={cells} onTeamDrop={handleDrop} />
         </section>
-
       </main>
     </>
-  )
+  );
 }

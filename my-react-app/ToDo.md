@@ -1,5 +1,4 @@
 ## To Do
-- [ ] Swappable cell values
 - [ ] Groups
   - Unique game ids so the same team names in different groups don't clash
 - [ ] User inputted values
@@ -13,3 +12,4 @@
 
 ## Done
 - [X] Movable cell values
+- [X] Swappable cell values
