@@ -14,7 +14,11 @@ const ROWS = 10; // 1 header row + 9 time slots
  * @returns {JSX.Element} The page header, court input, list of unplaced games and schedule table
  */
 export default function Draw() {
-  const teams = ['Meow', 'Woof', 'Moo', 'Roar']; // to be replaced with user input
+
+  const groups = [
+    {name: 'A', teams: ['Meow', 'Woof', 'Moo', 'Roar'], color: 'red'},
+    {name:'B', teams: ['Iron', 'Bronze', 'Silver', 'Copper'], color: 'blue'}
+  ]
 
   const [courts, setCourts] = useState(START_COURTS);
 
@@ -60,12 +64,13 @@ export default function Draw() {
       <main>
         <section>
         <UserInputs courts={courts} onCourtsChange={handleCourtsChange} />
-          {/* Games not yet placed in the table */}
-          <Group teams={teams} cells={cells} />
+
+        {groups.map((group) => (
+          <Group key={group.name} group={group} cells={cells} />
+        ))}
         </section>
         <section>
-          {/* Schedule grid; reports drops back up to handleDrop */}
-          <Table cells={cells} onTeamDrop={handleDrop} />
+          <Table cells={cells} groups={groups} onTeamDrop={handleDrop} />
         </section>
       </main>
     </>

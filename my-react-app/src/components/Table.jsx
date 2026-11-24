@@ -1,15 +1,16 @@
-import { DRAG_TYPE } from '../utils/grid';
+import { DRAG_TYPE, findGroup } from '../utils/grid';
 
 /**
  * Renders the schedule table.
  *
  * @param {Object} props
  * @param {(string|null)[][]} props.cells - The schedule grid
+ * @param {{ name: string, teams: string[], color: string }[]} props.groups - All groups, used to colour each game cell by its group
  * @param {(row: number, col: number, game: string, r_origin: number|null, c_origin: number|null) => void} props.onTeamDrop
  *   Called when a game is dropped on a cell
- * @returns {JSX.Element} The schedule table with court and time labels, where games can be dropped and moved
+ * @returns {JSX.Element} The schedule table with court and time labels, where games can be dropped, moved and colour-coded by group
  */
-export default function Table({ cells, onTeamDrop }) {
+export default function Table({ cells, groups, onTeamDrop }) {
   const time = 8;
 
   return (
@@ -19,11 +20,12 @@ export default function Table({ cells, onTeamDrop }) {
           <tr key={i}>
             {row.map((team, j) => {
               const isLabel = i === 0 || j === 0;
-
+              const group = !isLabel && team ? findGroup(groups, team): undefined
               return (
                 <td
                   key={j}
-                  // Only cells holding a game can be dragged
+                  className={group ? 'game-cell' : undefined}
+                  style={group ? {backgroundColor: group.color} : undefined}
                   draggable={!isLabel && team !== null}
                   onDragStart={(e) =>
                     e.dataTransfer.setData(

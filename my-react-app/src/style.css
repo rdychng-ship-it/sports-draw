@@ -27,9 +27,16 @@
     justify-content: center;
 }
 
+.games-item,
+.game-cell {
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #222;
+}
+
 main {
     display: grid;
-    grid-template-columns: 15% 85%;
+    grid-template-columns: 20% 80%;
 }
 
 table, th, td, tr {
@@ -41,6 +48,9 @@ table, th, td, tr {
 
 section {
     display: flex;
+    flex-direction: column;
     justify-content: center;
+    text-align: center;
+    margin: 10px;
 }
 
