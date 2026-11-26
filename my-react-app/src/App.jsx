@@ -4,6 +4,7 @@ import Table from './components/Table';
 import UserInputs from './components/UserInputs';
 import { resizeGrid } from './utils/grid';
 import { buildGameLookup } from './utils/groups';
+import { applyDrop } from './utils/schedule';
 
 const START_COURTS = 3;
 const ROWS = 10; // 1 header row + 9 time slots
@@ -46,8 +47,8 @@ export default function Draw() {
   }
 
   /**
-   * Places a game in a cell. If it came from another cell, that cell gets
-   * whatever was in the target (so occupied cells swap).
+   * Places a game in a cell, swapping with any game already there.
+   * Does nothing if the drop would put a team in two games in the same time slot.
    *
    * @param {number} row - Target row
    * @param {number} col - Target column
@@ -56,19 +57,8 @@ export default function Draw() {
    * @param {number|null} c_origin - Column it came from, or null if dragged from the list
    */
   function handleDrop(row, col, gameId, r_origin, c_origin) {
-    if (row === 0 || col === 0) return; // never drop onto the labels
-
-    setCells((prev) => {
-      const replaced = prev[row][col]; // what was in the target before the drop
-
-      return prev.map((rowArr, i) =>
-        rowArr.map((cell, j) =>
-          i === row && j === col             ? gameId    // the target gets the dragged game
-          : i === r_origin && j === c_origin ? replaced  // the origin gets the old target value
-          : cell                                         // every other cell stays the same
-        )
-      );
-    });
+    // applyDrop returns null when the drop isn't allowed; keeping prev means nothing changes
+    setCells((prev) => applyDrop(prev, gamesById, row, col, gameId, r_origin, c_origin) ?? prev);
   }
 
   return (
