@@ -3,6 +3,7 @@ import Group from './components/Group';
 import Table from './components/Table';
 import UserInputs from './components/UserInputs';
 import { resizeGrid } from './utils/grid';
+import { buildGameLookup } from './utils/groups';
 
 const START_COURTS = 3;
 const ROWS = 10; // 1 header row + 9 time slots
@@ -15,14 +16,27 @@ const ROWS = 10; // 1 header row + 9 time slots
  */
 export default function Draw() {
 
-  const groups = [
-    {name: 'A', teams: ['Meow', 'Woof', 'Moo', 'Roar'], color: 'red'},
-    {name:'B', teams: ['Iron', 'Bronze', 'Silver', 'Copper'], color: 'blue'}
+  const teams = [
+    {id: 'meow', name: 'Meow'},
+    {id: 'woof', name: 'Woof'},
+    {id: 'moo', name: 'Moo'},
+    {id: 'roar', name: 'Roar'},
+    {id: 'iron', name: 'Iron'},
+    {id: 'bronze', name: 'Bronze'},
+    {id: 'silver', name: 'Silver'},
+    {id: 'copper', name: 'Copper'}
   ]
+  const groups = [
+    {id: 'g1', name: 'A', color: 'red', teamsID: ['meow', 'woof', 'moo', 'roar']},
+    {id: 'g2', name: 'B', color: 'blue', teamsID: ['iron', 'bronze', 'silver', 'copper']}
+  ]
+
+  // Display-ready games keyed by id, rebuilt each render from groups and teams (not state)
+  const gamesById = buildGameLookup(groups, teams);
 
   const [courts, setCourts] = useState(START_COURTS);
 
-  // Schedule grid: cells[row][col] holds a game string, or null if empty.
+  // Schedule grid: cells[row][col] holds a game id, or null if empty.
   // +1 column for the time labels.
   const [cells, setCells] = useState(() => resizeGrid([], ROWS, START_COURTS + 1));
 
@@ -37,11 +51,11 @@ export default function Draw() {
    *
    * @param {number} row - Target row
    * @param {number} col - Target column
-   * @param {string} team - The game being dropped, e.g. "Meow vs Woof"
+   * @param {string} gameId - Id of the game being dropped, e.g. "g1-meow-woof"
    * @param {number|null} r_origin - Row it came from, or null if dragged from the list
    * @param {number|null} c_origin - Column it came from, or null if dragged from the list
    */
-  function handleDrop(row, col, team, r_origin, c_origin) {
+  function handleDrop(row, col, gameId, r_origin, c_origin) {
     if (row === 0 || col === 0) return; // never drop onto the labels
 
     setCells((prev) => {
@@ -49,7 +63,7 @@ export default function Draw() {
 
       return prev.map((rowArr, i) =>
         rowArr.map((cell, j) =>
-          i === row && j === col             ? team      // the target gets the dragged game
+          i === row && j === col             ? gameId    // the target gets the dragged game
           : i === r_origin && j === c_origin ? replaced  // the origin gets the old target value
           : cell                                         // every other cell stays the same
         )
@@ -63,14 +77,14 @@ export default function Draw() {
 
       <main>
         <section>
-        <UserInputs courts={courts} onCourtsChange={handleCourtsChange} />
+          <UserInputs courts={courts} onCourtsChange={handleCourtsChange} />
 
-        {groups.map((group) => (
-          <Group key={group.name} group={group} cells={cells} />
-        ))}
+          {groups.map((group) => (
+            <Group key={group.id} group={group} gamesById={gamesById} cells={cells} />
+          ))}
         </section>
         <section>
-          <Table cells={cells} groups={groups} onTeamDrop={handleDrop} />
+          <Table cells={cells} gamesById={gamesById} onTeamDrop={handleDrop} />
         </section>
       </main>
     </>

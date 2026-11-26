@@ -1,16 +1,17 @@
-import { DRAG_TYPE, findGroup } from '../utils/grid';
+import { DRAG_TYPE } from '../utils/groups';
 
 /**
  * Renders the schedule table.
  *
  * @param {Object} props
- * @param {(string|null)[][]} props.cells - The schedule grid
- * @param {{ name: string, teams: string[], color: string }[]} props.groups - All groups, used to colour each game cell by its group
- * @param {(row: number, col: number, game: string, r_origin: number|null, c_origin: number|null) => void} props.onTeamDrop
+ * @param {(string|null)[][]} props.cells - The schedule grid of game ids
+ * @param {Object<string, { id: string, label: string, color: string }>} props.gamesById
+ *   Display-ready games keyed by id, used for each cell's label and colour
+ * @param {(row: number, col: number, gameId: string, r_origin: number|null, c_origin: number|null) => void} props.onTeamDrop
  *   Called when a game is dropped on a cell
  * @returns {JSX.Element} The schedule table with court and time labels, where games can be dropped, moved and colour-coded by group
  */
-export default function Table({ cells, groups, onTeamDrop }) {
+export default function Table({ cells, gamesById, onTeamDrop }) {
   const time = 8;
 
   return (
@@ -18,19 +19,21 @@ export default function Table({ cells, groups, onTeamDrop }) {
       <tbody>
         {cells.map((row, i) => (
           <tr key={i}>
-            {row.map((team, j) => {
+            {row.map((gameId, j) => {
               const isLabel = i === 0 || j === 0;
-              const group = !isLabel && team ? findGroup(groups, team): undefined
+              const game = !isLabel && gameId ? gamesById[gameId] : undefined;
+
               return (
                 <td
                   key={j}
-                  className={group ? 'game-cell' : undefined}
-                  style={group ? {backgroundColor: group.color} : undefined}
-                  draggable={!isLabel && team !== null}
+                  className={game ? 'game-cell' : undefined}
+                  style={game ? { backgroundColor: game.color } : undefined}
+                  // Only cells holding a game can be dragged
+                  draggable={!isLabel && gameId !== null}
                   onDragStart={(e) =>
                     e.dataTransfer.setData(
                       DRAG_TYPE,
-                      JSON.stringify({ dropped: team, r_origin: i, c_origin: j })
+                      JSON.stringify({ dropped: gameId, r_origin: i, c_origin: j })
                     )
                   }
                   // Allow drops only on game cells, and only for our own drag data
@@ -49,7 +52,7 @@ export default function Table({ cells, groups, onTeamDrop }) {
                   {i === 0 && j === 0 ? 'Time'
                     : i === 0 ? `Court ${j}`
                     : j === 0 ? `${time + i}:00`
-                    : team}
+                    : game?.label ?? ''}
                 </td>
               );
             })}
