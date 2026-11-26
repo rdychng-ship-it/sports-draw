@@ -10,15 +10,21 @@ jobs:
   check:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: my-react-app
+
     steps:
       # Get the code
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Install Node, and cache npm downloads between runs
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: lts/*
           cache: npm
+          # The lock file isn't at the top level, so say where it is
+          cache-dependency-path: my-react-app/package-lock.json
 
       # Install exactly what's in package-lock.json
       - run: npm ci
